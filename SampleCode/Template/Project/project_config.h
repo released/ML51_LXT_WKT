@@ -9,10 +9,31 @@ extern volatile uint32_t BitFlag;
 typedef enum{
 	flag_start = 0 ,
 
-
+	flag_125ms ,
+	flag_250ms ,
+	flag_500ms ,
+	flag_1000ms ,
+	
 	flag_error ,		
 	flag_DEFAULT	
 }Flag_Index;
+
+
+typedef enum{
+	WKT_62_5_ms_16_psc = 0 ,
+	WKT_62_5_ms_64_psc ,
+	WKT_62_5_ms_256_psc ,	
+	WKT_125_ms_256_psc ,	
+	WKT_250_ms_256_psc ,	
+	WKT_500_ms_256_psc ,	
+	
+	WKT_DEFAULT	
+}WKT_Timer_Index;
+
+typedef struct{
+	WKT_Timer_Index	idx;
+	unsigned int		rwk;
+}WKT_TypeDef;
 
 /*_____ D E F I N I T I O N S ______________________________________________*/
 #define _debug_log_UART_					(1)

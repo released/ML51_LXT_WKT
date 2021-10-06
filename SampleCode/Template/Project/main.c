@@ -18,12 +18,32 @@ volatile uint8_t u8TL0_Tmp = 0;
 /*_____ D E F I N I T I O N S ______________________________________________*/
 volatile uint32_t BitFlag = 0;
 volatile uint32_t counter_tick = 0;
+volatile uint32_t counter_tick_WKT = 0;
 
+unsigned char DIV_125ms = 0;
+unsigned char DIV_250ms = 0;
+unsigned char DIV_500ms = 0;
+unsigned char DIV_1000ms = 0;
 /*_____ M A C R O S ________________________________________________________*/
 #define SYS_CLOCK 								(24000000ul)
 
 
 /*_____ F U N C T I O N S __________________________________________________*/
+
+void tick_counter_WKT(void)
+{
+	counter_tick++;
+}
+
+uint32_t get_tick_WKT(void)
+{
+	return (counter_tick);
+}
+
+void set_tick_WKT(uint32_t t)
+{
+	counter_tick = t;
+}
 
 
 void tick_counter(void)
@@ -216,21 +236,70 @@ void WakeUp_Timer_ISR (void)   interrupt 17     //ISR for self wake-up timer
 {
 	_push_(SFRS); 
 	
-	P33 ^= 1;
+//	P33 ^= 1;
+
+	tick_counter_WKT();
+
+	if ((get_tick_WKT() % DIV_125ms) == 0)
+	{
+		set_flag(flag_125ms,ENABLE);
+	}
+
+	if ((get_tick_WKT() % DIV_250ms) == 0)
+	{
+		set_flag(flag_250ms,ENABLE);
+	}	
+
+	if ((get_tick_WKT() % DIV_500ms) == 0)
+	{
+		set_flag(flag_500ms,ENABLE);
+	}
+
+	if ((get_tick_WKT() % DIV_1000ms) == 0)
+	{
+		set_flag(flag_1000ms,ENABLE);
+	}
 	
     clr_WKCON_WKTF;                                   //clear interrupt flag
 	_pop_(SFRS);
 }
 
-void WKT_Init(void)
-{
-	/*
-		target : 62.5 ms , when LXT , u8WKTRLData = 32
-	*/
 
-//	const unsigned int u8WKTRLData = 128;	//	1/ 16
-	const unsigned int u8WKTRLData = 32;	//	1/ 64
-//	const unsigned int u8WKTRLData = 8;	//	1/ 256
+/*
+	when LXT : 32.768
+	target timing : 
+	62.5 ms
+	125 ms
+	250 ms
+	500 ms
+
+	psc set as 1/256
+
+	RWK will be
+	8
+	16
+	32
+	64
+
+	FORMULA : RWK = target timing / 1000 * (LXT / PSC)
+
+*/
+const WKT_TypeDef wkt_table[] = 
+{
+	{WKT_62_5_ms_16_psc		,128} ,
+	{WKT_62_5_ms_64_psc		,32} ,
+	{WKT_62_5_ms_256_psc	,8} ,	
+
+	{WKT_125_ms_256_psc		,16} ,
+	{WKT_250_ms_256_psc		,32} ,	
+	{WKT_500_ms_256_psc		,64} ,
+			
+};
+
+void WKT_Init(WKT_Timer_Index idx)
+{
+	unsigned char i = 0;
+	unsigned int u16WKTRLData = 0;
 
 	SFRS = 0;
 
@@ -244,11 +313,73 @@ void WKT_Init(void)
 	WKCON &= 0xDF;
 	#endif
 
+	//WKT Pre-Scalar , and timer division
+	#if 1
+	switch(idx)
+	{
+		case WKT_62_5_ms_16_psc:
+			WKCON &= 0xF8; WKCON |= 0x02;//	1/ 16
 
-	//WKT Pre-Scalar : 
+			DIV_125ms 	= 2;
+			DIV_250ms 	= 4;
+			DIV_500ms 	= 8;
+			DIV_1000ms 	= 16;
+		
+			break;
+		case WKT_62_5_ms_64_psc:
+			WKCON &= 0xF8; WKCON |= 0x03;	//	1/ 64	
+
+			DIV_125ms 	= 2;
+			DIV_250ms 	= 4;
+			DIV_500ms 	= 8;
+			DIV_1000ms 	= 16;
+		
+			break;
+		case WKT_62_5_ms_256_psc:
+			WKCON &= 0xF8; WKCON |= 0x04;	//	1/ 256
+
+			DIV_125ms 	= 2;
+			DIV_250ms 	= 4;
+			DIV_500ms 	= 8;
+			DIV_1000ms 	= 16;
+		
+			break;		
+	
+		case WKT_125_ms_256_psc:
+			WKCON &= 0xF8; WKCON |= 0x04;	//	1/ 256	
+			
+			DIV_125ms 	= 1;
+			DIV_250ms 	= 2;
+			DIV_500ms 	= 4;
+			DIV_1000ms 	= 8;
+		
+			break;
+		case WKT_250_ms_256_psc:
+			WKCON &= 0xF8; WKCON |= 0x04;	//	1/ 256		
+
+			DIV_125ms 	= 1;		// not available for 125ms , since the base timing is 250ms
+			DIV_250ms 	= 1;
+			DIV_500ms 	= 2;
+			DIV_1000ms 	= 4;
+		
+			break;
+		case WKT_500_ms_256_psc:
+			WKCON &= 0xF8; WKCON |= 0x04;	//	1/ 256		
+
+			DIV_125ms 	= 1;		// not available for 125ms , since the base timing is 500ms
+			DIV_250ms 	= 1;		// not available for 250ms , since the base timing is 500ms
+			DIV_500ms 	= 1;
+			DIV_1000ms 	= 2;
+		
+			break;			
+	}
+	#else
 //	WKCON &= 0xF8; WKCON |= 0x02;//	1/ 16	
 	WKCON &= 0xF8; WKCON |= 0x03;	//	1/ 64
 //	WKCON &= 0xF8; WKCON |= 0x04;	//	1/ 256
+	#endif
+
+	u16WKTRLData = wkt_table[idx].rwk;
 	
 	/*
 		ML51 TRM 2.01
@@ -258,13 +389,13 @@ void WKT_Init(void)
 	*/
 	#if 0
 	SFRS=0;
-	RWKL = 256 - u8WKTRLData;
+	RWKL = 256 - u16WKTRLData;
 	
 	#else	// 64K flash
 	SFRS=2;
-	RWKH = HIBYTE ( 65536ul - u8WKTRLData);		//65535ul-(u8WKTRLData*512ul/1000ul)
+	RWKH = HIBYTE ( 65536ul - u16WKTRLData);		//65535ul-(u8WKTRLData*512ul/1000ul)
 	SFRS=0;
-	RWKL = LOBYTE ( 65536ul - u8WKTRLData);		//65535ul-(u8WKTRLData*512ul/1000ul)
+	RWKL = LOBYTE ( 65536ul - u16WKTRLData);		//65535ul-(u8WKTRLData*512ul/1000ul)
 	#endif
 	
     ENABLE_WKT_INTERRUPT;             // enable WKT interrupt
@@ -376,12 +507,33 @@ void main (void)
 	GPIO_Init();
 //	Timer0_Init();
 
-	WKT_Init();
+	WKT_Init(WKT_62_5_ms_64_psc);
 		
     while(1)
     {
+		if (is_flag_set(flag_125ms))
+		{
+			set_flag(flag_125ms , DISABLE);
+			P33 ^= 1;
+		}
 
+		if (is_flag_set(flag_250ms))
+		{
+			set_flag(flag_250ms , DISABLE);
+//			P33 ^= 1;
+		}
 		
+		if (is_flag_set(flag_500ms))
+		{
+			set_flag(flag_500ms , DISABLE);
+//			P33 ^= 1;
+		}
+
+		if (is_flag_set(flag_1000ms))
+		{
+			set_flag(flag_1000ms , DISABLE);
+//			P33 ^= 1;
+		}		
     }
 }
 

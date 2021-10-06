@@ -6,7 +6,7 @@ update @ 2021/10/06
 
 1. use wake up timer , by LXT , test under NuTiny-SDK-M51 EVM
 
-2. 
+2. use WKT as basic timer interrupt , as for the RWK formula , refer to wkt_table comment
 
 notices about RWK setting
 
