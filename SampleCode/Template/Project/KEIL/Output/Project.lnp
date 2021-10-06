@@ -1,0 +1,13 @@
+".\Output\main.obj",
+".\Output\sys.obj",
+".\Output\gpio.obj",
+".\Output\IAP.obj",
+".\Output\putchar.obj",
+".\Output\uart.obj",
+".\Output\delay.obj",
+".\Output\common.obj",
+".\Output\STARTUP.obj" 
+TO ".\Output\Project" 
+
+PRINT(".\LST\Project.map") DISABLEWARNING (16) 
+REMOVEUNUSED 

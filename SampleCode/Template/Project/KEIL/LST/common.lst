@@ -1,0 +1,70 @@
+C51 COMPILER V9.55   COMMON                                                                10/06/2021 14:37:17 PAGE 1   
+
+
+C51 COMPILER V9.55, COMPILATION OF MODULE COMMON
+OBJECT MODULE PLACED IN .\Output\common.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\..\..\Library\StdDriver\src\common.c LARGE OMF2 OPTIMIZE(7,SPEED) 
+                    -BROWSE INCDIR(..\..\..\..\Library\Device\Include;..\..\..\..\Library\StdDriver\inc) DEBUG PRINT(.\LST\common.lst) TABS(2
+                    -) OBJECT(.\Output\common.obj)
+
+line level    source
+
+   1          /*--------------------------------------------------------------------------------------------------------
+             --*/
+   2          /*                                                                                                        
+             - */
+   3          /* Copyright(c) 2020 Nuvoton Technology Corp. All rights reserved.                                        
+             - */
+   4          /*                                                                                                        
+             - */
+   5          /*--------------------------------------------------------------------------------------------------------
+             --*/
+   6          
+   7          #include "ML51.h"
+   8          bit BIT_TMP;
+   9          unsigned char data  TA_REG_TMP,SFRS_TMP,BYTE_TMP;
+  10          
+  11          /**
+  12           * @brief       Read Dataflash
+  13           * @param       Dataflash start address
+  14           * @return      Dataflash Value
+  15           * @details     None
+  16           */
+  17           unsigned char Read_APROM_BYTE(unsigned int code *u16_addr)
+  18          {
+  19   1          unsigned char rdata;
+  20   1          rdata = *u16_addr >> 8;
+  21   1          return rdata;
+  22   1      }
+  23          
+  24          /**
+  25           * @brief       Global Interrupt Status (EA)
+  26           * @param       Enable / Disable
+  27           * @return      None
+  28           * @details     after all IP interrupt enable. Must enable gloabl interrupt.
+  29           * @Example     Global_Interrupt(ENABLE);
+  30           */
+  31          void Global_Interrupt(unsigned char u8IntStatus)
+  32          {
+  33   1          EA = u8IntStatus;
+  34   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     14    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+C51 COMPILER V9.55   COMMON                                                                10/06/2021 14:37:17 PAGE 2   
+
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

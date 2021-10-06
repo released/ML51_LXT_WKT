@@ -1,0 +1,151 @@
+C51 COMPILER V9.55   TRIMLIRC                                                              10/06/2021 11:43:05 PAGE 1   
+
+
+C51 COMPILER V9.55, COMPILATION OF MODULE TRIMLIRC
+OBJECT MODULE PLACED IN .\Output\TrimLIRC.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\..\..\Library\StdDriver\src\TrimLIRC.c LARGE OMF2 OPTIMIZE(7,SPEED
+                    -) BROWSE INCDIR(..\..\..\..\Library\Device\Include;..\..\..\..\Library\StdDriver\inc) DEBUG PRINT(.\LST\TrimLIRC.lst) TA
+                    -BS(2) OBJECT(.\Output\TrimLIRC.obj)
+
+line level    source
+
+   1          /*--------------------------------------------------------------------------------------------------------
+             --*/
+   2          /*                                                                                                        
+             - */
+   3          /* Copyright(c) 2020 Nuvoton Technology Corp. All rights reserved.                                        
+             - */
+   4          /*                                                                                                        
+             - */
+   5          /*--------------------------------------------------------------------------------------------------------
+             --*/
+   6          
+   7          //********************************************************************************************************
+             -***
+   8          //  Nuvoton Technoledge Corp. 
+   9          //  Website: http://www.nuvoton.com
+  10          //  E-Mail : MicroC-8bit@nuvoton.com
+  11          //  Date   : Apr/29/2020
+  12          //********************************************************************************************************
+             -***
+  13          
+  14          #include "ML51.h"
+  15          
+  16          unsigned int rctemp[5],rtemp;
+  17          unsigned char data c,d;
+  18          /**
+  19           * @brief       Trim LIRC into 1% sub
+  20           * @param       none
+  21           * @return      none
+  22           * @details     whole trim time about 32ms.
+  23           * @note        always use trim lirc when power is stable.
+  24           */
+  25           
+  26           void Timer2_Initial_Start(void)
+  27          {
+  28   1          SFRS = 0x00;
+  29   1          clr_T2CON_CMRL2;                                  //Timer 2 as auto-reload mode
+  30   1          set_T2MOD_LDEN;
+  31   1          set_T2MOD_CMPCR;                                  //Timer 2 value is auto-cleared as 0000H when a comp
+             -are match occurs.
+  32   1          TL2 = 0;
+  33   1          TH2 = 0;
+  34   1          SFRS = 1;
+  35   1          RCMP2L = 0;
+  36   1          RCMP2H = 0;
+  37   1          set_T2CON_TR2;                                
+  38   1      }
+  39          
+  40          void WKT_Initial_Start(void)
+  41          {
+  42   1          SFRS = 0;
+  43   1          WKCON &= 0xDF;
+  44   1          RWKH = 0xFF;
+  45   1          RWKL = 0x19;
+C51 COMPILER V9.55   TRIMLIRC                                                              10/06/2021 11:43:05 PAGE 2   
+
+  46   1          set_WKCON_WKTR;
+  47   1      }
+  48          
+  49          void WakeUp_Timer_ISR (void) interrupt 17     //ISR for self wake-up timer
+  50          {
+  51   1          _push_(SFRS);
+  52   1        
+  53   1          clr_WKCON_WKTR;
+  54   1          clr_WKCON_WKTF;                                   //clear interrupt flag   
+  55   1          clr_T2CON_TR2;
+  56   1          rctemp[c] = (TH2<<8)+TL2;
+  57   1          c++;
+  58   1          SFRS = 
+  59   1          SFRS = 0;
+  60   1          TL2 = 0;
+  61   1          TH2 = 0;
+  62   1          WKT_Initial_Start();
+  63   1          set_T2CON_TR2;    
+  64   1      
+  65   1          _pop_(SFRS);
+  66   1      }
+  67          
+  68          void Trim_LIRC(void) 
+  69          {
+  70   1          set_EIE1_EWKT;                                   // Enable WKT interrupt
+  71   1          ENABLE_GLOBAL_INTERRUPT;                        // Enable Globe interrupt
+  72   1          WKT_Initial_Start();
+  73   1          Timer2_Initial_Start();
+  74   1          c=0;
+  75   1          while (c!=5);
+  76   1          clr_WKCON_WKTR;
+  77   1          clr_WKCON_WKTF;                                  //clear interrupt flag   
+  78   1          clr_T2CON_TR2;
+  79   1          DISABLE_GLOBAL_INTERRUPT;
+  80   1          for(c=0;c<4;c++)
+  81   1          {
+  82   2              rtemp=(rctemp[c+1]+rctemp[c])/2;
+  83   2          }
+  84   1          if (rtemp<15625)
+  85   1          {
+  86   2            d = (15625-rtemp)/300; 
+  87   2            SFRS=1;  
+  88   2            c=LIRCTRIM+d;
+  89   2            TA=0xAA;
+  90   2            TA=0x55;
+  91   2            LIRCTRIM = c;
+  92   2          }
+  93   1      }
+  94          
+  95          
+  96          void Trim_LIRC_32768(void) 
+  97          {      
+  98   1            SFRS=0;
+  99   1            if(PCON&SET_BIT4)
+ 100   1            {
+ 101   2              Trim_LIRC();
+ 102   2              SFRS=1;  
+ 103   2              c=LIRCTRIM+0x21;
+ 104   2              TA=0xAA;
+ 105   2              TA=0x55;
+ 106   2              LIRCTRIM = c;
+ 107   2              SFRS=0;
+C51 COMPILER V9.55   TRIMLIRC                                                              10/06/2021 11:43:05 PAGE 3   
+
+ 108   2              PCON&=CLR_BIT4;
+ 109   2            }
+ 110   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    348    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     12    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
